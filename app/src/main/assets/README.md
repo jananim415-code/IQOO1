@@ -1,0 +1,1 @@
+Optional model assets belong here. The prototype intentionally ships without binary model files so it remains reviewable and offline-build friendly; `OnDeviceInference` loads `visual_tamper.tflite` and `payload_risk.tflite` when supplied and uses a deterministic CPU fallback otherwise. A production build can add the LiteRT/QNN delegate behind the same boundary.
