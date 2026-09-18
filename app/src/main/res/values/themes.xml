@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.SafePayShield" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/blue</item>
+        <item name="android:windowBackground">@color/canvas</item>
+        <item name="android:statusBarColor">@color/canvas</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <style name="Theme.SafePayShield.Elder" parent="Theme.SafePayShield">
+        <!-- We can scale font sizes here if we used theme attributes, but standard scaling is easier in code -->
+    </style>
+</resources>

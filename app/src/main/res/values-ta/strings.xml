@@ -1,0 +1,69 @@
+<resources>
+    <string name="app_name">SafePay Shield</string>
+    <string name="tagline">உங்கள் கட்டணப் பாதுகாப்பு அடுக்கு</string>
+    <string name="elder_tagline">எளிய பாதுகாப்பு</string>
+
+    <string name="home">முகப்பு</string>
+    <string name="family">குடும்பம்</string>
+    <string name="settings">அமைப்புகள்</string>
+    <string name="history">வரலாறு</string>
+
+    <string name="scan_qr">QR ஸ்கேன் செய்க</string>
+    <string name="paste_upi">UPI இணைப்பை ஒட்டவும்</string>
+    <string name="tap_pay">Tap &amp; Pay பாதுகாப்பு</string>
+    <string name="elder_mode">முதியோர் பயன்முறை</string>
+    <string name="demo_scenarios">டெமோ காட்சிகள்</string>
+    <string name="recent_scans">சமீபத்திய ஸ்கேன்கள்</string>
+
+    <string name="safe_to_proceed">தொடர பாதுகாப்பானது</string>
+    <string name="pause_and_verify">சிறிது நிறுத்தி சரிபார்க்கவும்</string>
+    <string name="payment_blocked">கட்டணம் தடுக்கப்பட்டது</string>
+
+    <string name="privacy_promise">தனியுரிமை உறுதிமொழி</string>
+    <string name="how_it_works">இது எப்படி வேலை செய்கிறது</string>
+    <string name="clear_local_data">அனைத்து உள்ளூர் தரவையும் அழிக்கவும்</string>
+    <string name="share_concern">கவலையைப் பகிரவும்</string>
+    <string name="nfc_tap_desc">உங்கள் தொலைபேசியை NFC கட்டணக் குறியின் அருகில் வைக்கவும்</string>
+    <string name="run_offline_demo">ஆஃப்லைன் டெமோவை இயக்கவும்</string>
+    <string name="cancel">ரத்துசெய்</string>
+    <string name="good_morning">காலை வணக்கம்</string>
+    <string name="good_afternoon">மதிய வணக்கம்</string>
+    <string name="good_evening">மாலை வணக்கம்</string>
+    <string name="voice_command">குரல் கட்டளை</string>
+    <string name="no_contacts">நம்பகமான தொடர்புகள் இன்னும் சேர்க்கப்படவில்லை.</string>
+    <string name="no_merchants">நம்பகமான வணிகர்கள் இன்னும் சேர்க்கப்படவில்லை.</string>
+    <string name="headline">நம்பிக்கையுடன் பணம் செலுத்துங்கள்.</string>
+    <string name="protection_title">சாதனத்திலேயே பாதுகாப்பு</string>
+    <string name="protection_desc">ஒவ்வொரு கட்டணமும் உங்கள் தொலைபேசியிலிருந்து வெளியேறும் முன் பாதுகாப்பு சோதனைக்கு உட்படுத்தப்படும்.</string>
+    <string name="local_label">உள்ளூர்</string>
+    <string name="local_desc">சாதனத்தில் மட்டும்</string>
+    <string name="layers_label">5 அடுக்குகள்</string>
+    <string name="layers_desc">ஆபத்து பகுப்பாய்வு</string>
+    <string name="no_history">உங்கள் ஸ்கேன் வரலாறு இங்கே தோன்றும்.</string>
+
+    <string name="terms_conditions">விதிமுறைகள் மற்றும் நிபந்தனைகள்</string>
+    <string name="privacy_policy">தனியுரிமைக் கொள்கை</string>
+    <string name="verify_with_contact">நம்பகமான தொடர்புடன் சரிபார்க்கவும்</string>
+    <string name="why_is_this_risky">இது ஏன் ஆபத்தானது?</string>
+    <string name="new_payee">புதிய கட்டண முகவரி</string>
+    <string name="large_amount">பெரிய தொகை</string>
+    <string name="unusual_time">அசாதாரண கட்டண நேரம்</string>
+    <string name="suspicious_message">சந்தேகத்திற்கிடமான கட்டணச் செய்தி</string>
+    <string name="payee_unverified">பெறுநர் சரிபார்க்கப்படவில்லை</string>
+    <string name="biometric_required">உயிரியளவியல் அங்கீகாரம் தேவை</string>
+    <string name="terms_body">SafePay Shield என்பது இந்த சாதனத்தில் QR, UPI இணைப்புகள் மற்றும் NFC கட்டணத் தரவை ஆய்வு செய்யும் உள்ளூர் பாதுகாப்பு உதவி கருவியாகும்.
+
+1. நோக்கம் மற்றும் வரம்புகள்: கட்டண ஆபத்தைக் காட்டக்கூடிய அறிகுறிகளை ஆப் காட்டுகிறது. ஒவ்வொரு மோசடியையும் கண்டறிய முடியாது; கட்டணம் பாதுகாப்பானது அல்லது மோசடி தடுக்கப்படும் என்று உத்தரவாதம் இல்லை.
+2. பயனர் பொறுப்பு: பெறுநர், தொகை மற்றும் விவரங்களை நீங்களே உறுதி செய்யுங்கள். UPI PIN, OTP, கடவுச்சொல் அல்லது பயோமெட்ரிக் அணுகலை யாரிடமும் பகிர வேண்டாம்.
+3. மூன்றாம் தரப்பு சேவைகள்: கட்டணங்கள் வங்கிகள் மற்றும் கட்டண ஆப்களால் நிறைவேற்றப்படுகின்றன. அவற்றின் செயல்பாடு, பாதுகாப்பு மற்றும் தனியுரிமை SafePay Shield கட்டுப்பாட்டில் இல்லை.
+4. பாதுகாப்பு வரம்புகள்: சாதன பாதிப்பு, தீங்கிழைக்கும் ஆப்கள், தவறான உள்ளீடு அல்லது கிடைக்காத சென்சார்கள் பாதுகாப்பை குறைக்கலாம்.
+5. உள்ளூர் தரவு: வரலாறு, நம்பகமான தொடர்புகள், வணிகர்கள் மற்றும் விருப்பங்கள் சாதனத்தில் குறியாக்கத்துடன் சேமிக்கப்படுகின்றன.
+6. இறுதி முடிவு: ஆபத்து ஆய்வு உதவி மட்டுமே. ஒவ்வொரு எச்சரிக்கையையும் படித்து இறுதி கட்டண முடிவை நீங்களே எடுக்கவும்.</string>
+    <string name="privacy_body">தனியுரிமை தகவல்
+
+கட்டண ஆய்வு உள்ளூர் விதிகள் மற்றும் சாதனத்திலுள்ள மாதிரிகளைப் பயன்படுத்தி இந்த சாதனத்திலேயே செய்யப்படுகிறது. SafePay Shield கணக்கு தேவையில்லை; கட்டணத் தரவு SafePay Shield சேவையகத்திற்கு அனுப்பப்படாது.
+
+வரலாறு, நம்பகமான தொடர்புகள், வணிகர்கள் மற்றும் விருப்பங்கள் உள்ளூரில் சேமிக்கப்படுகின்றன. முக்கிய விருப்பங்கள் Android Keystore குறியாக்க சேமிப்பைப் பயன்படுத்துகின்றன.
+
+எந்த ஆப்பும் மோசடிக்கு முழுமையான பாதுகாப்பை உத்தரவாதம் செய்ய முடியாது. பெறுநர் மற்றும் தொகையை தனியாக உறுதி செய்த பிறகே UPI PIN அல்லது OTP உள்ளிடுங்கள்.</string>
+</resources>

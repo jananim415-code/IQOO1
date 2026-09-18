@@ -1,0 +1,55 @@
+<resources>
+    <string name="app_name">SafePay Shield</string>
+    <string name="tagline">Your payment safety layer</string>
+    <string name="elder_tagline">Simple protection</string>
+
+    <string name="home">Home</string>
+    <string name="family">Family</string>
+    <string name="settings">Settings</string>
+    <string name="history">History</string>
+
+    <string name="scan_qr">Scan QR</string>
+    <string name="paste_upi">Paste UPI link</string>
+    <string name="tap_pay">Tap &amp; Pay Security</string>
+    <string name="elder_mode">Elder Mode</string>
+    <string name="demo_scenarios">Demo scenarios</string>
+    <string name="recent_scans">Recent scans</string>
+
+    <string name="safe_to_proceed">Safe to proceed</string>
+    <string name="pause_and_verify">Pause and verify</string>
+    <string name="payment_blocked">Payment blocked</string>
+
+    <string name="privacy_promise">Privacy promise</string>
+    <string name="how_it_works">How it works</string>
+    <string name="clear_local_data">Clear all local data</string>
+    <string name="share_concern">Share concern</string>
+    <string name="nfc_tap_desc">Tap your phone near the NFC payment tag</string>
+    <string name="run_offline_demo">Run Offline Demo</string>
+    <string name="cancel">Cancel</string>
+    <string name="good_morning">Good morning</string>
+    <string name="good_afternoon">Good afternoon</string>
+    <string name="good_evening">Good evening</string>
+    <string name="voice_command">Voice Command</string>
+    <string name="no_contacts">No trusted contacts added yet.</string>
+    <string name="no_merchants">No trusted merchants added yet.</string>
+    <string name="headline">Pay with confidence.</string>
+    <string name="protection_title">ON-DEVICE PROTECTION</string>
+    <string name="protection_desc">Every payment gets a safety check before it leaves your phone.</string>
+    <string name="local_label">LOCAL</string>
+    <string name="local_desc">Only on device</string>
+    <string name="layers_label">5 LAYERS</string>
+    <string name="layers_desc">Risk analysis</string>
+    <string name="no_history">Your scan history will appear here.</string>
+    <string name="terms_conditions">Terms &amp; Conditions</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="verify_with_contact">Verify with trusted contact</string>
+    <string name="why_is_this_risky">Why is this risky?</string>
+    <string name="new_payee">New payment address</string>
+    <string name="large_amount">Large amount</string>
+    <string name="unusual_time">Unusual payment time</string>
+    <string name="suspicious_message">Suspicious payment message</string>
+    <string name="payee_unverified">Payee is not verified</string>
+    <string name="biometric_required">Biometric authentication required</string>
+    <string name="terms_body">SafePay Shield is a local safety assistance tool. It analyzes QR codes, UPI links, and NFC payment payloads on this device. Purpose and limitations: The app highlights possible payment risks, but cannot detect every scam and does not guarantee that a payment is safe or that fraud will be prevented. User responsibility: Confirm the payee, amount, and details yourself. Never share your UPI PIN, OTP, password, or biometric access. Third-party services: Payments are completed by banks and payment applications outside SafePay Shield control. Security limitations: Device compromise, malicious apps, incorrect input, unsupported payloads, and unavailable sensors can reduce accuracy or protection. Local data: History, trusted contacts, trusted merchants, and preferences are stored locally using encrypted Android storage. Risk analysis is assistance only; review warnings and make the final payment decision yourself.</string>
+    <string name="privacy_body">Privacy information: Payment analysis uses local rules and on-device models. The app does not require a SafePay Shield account or send payment payloads to a SafePay Shield server. History, trusted contacts, trusted merchants, and preferences are stored locally. Sensitive preferences use Android Keystore-backed encrypted storage. Third-party payment apps may receive payment details only when you choose to open a payment handoff. No app can guarantee complete protection from fraud. Confirm the payee and amount before entering a UPI PIN or OTP.</string>
+</resources>

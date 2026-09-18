@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.safepayshield.app.ui.fragments.HomeFragment"
+        android:label="Home" />
+    <fragment
+        android:id="@+id/scanFragment"
+        android:name="com.safepayshield.app.ui.fragments.ScanFragment"
+        android:label="Scan" />
+    <fragment
+        android:id="@+id/resultFragment"
+        android:name="com.safepayshield.app.ui.fragments.ResultFragment"
+        android:label="Result" />
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.safepayshield.app.ui.fragments.SettingsFragment"
+        android:label="Settings" />
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.safepayshield.app.ui.fragments.HistoryFragment"
+        android:label="History" />
+    <fragment
+        android:id="@+id/familyFragment"
+        android:name="com.safepayshield.app.ui.fragments.FamilyFragment"
+        android:label="Family" />
+    <fragment
+        android:id="@+id/aboutFragment"
+        android:name="com.safepayshield.app.ui.fragments.AboutFragment"
+        android:label="About" />
+    <fragment
+        android:id="@+id/nfcFragment"
+        android:name="com.safepayshield.app.ui.fragments.TapAndPayFragment"
+        android:label="Tap &amp; Pay" />
+    <fragment
+        android:id="@+id/termsFragment"
+        android:name="com.safepayshield.app.ui.fragments.TermsFragment"
+        android:label="Terms" />
+</navigation>

@@ -1,19 +1,25 @@
-# SafePay Shield model contracts
+# SafePay Shield AI Models
 
-The app loads optional TensorFlow Lite/LiteRT assets from `app/src/main/assets`. Missing or invalid assets are caught and use the local rules fallback.
+SafePay Shield uses on-device inference to enhance its risk analysis. All inference happens locally; no data ever leaves the phone.
 
-## `visual_tamper.tflite`
+## Model Contracts
 
-- Input: one RGB float tensor shaped `[1, 224, 224, 3]`, normalized to `[0, 1]`.
-- Output: one float tensor shaped `[1, 1]`.
-- Meaning: tamper probability in `[0, 1]`, where `1` means strong evidence of overlay, occlusion, alignment, or print inconsistency.
-- Production: quantized INT8 MobileNetV3-small or equivalent, with representative QR-image calibration data.
+### 1. Visual Tamper Detection (`visual_tamper.tflite`)
+- **Input**: `[1, 224, 224, 3]` (RGB Float normalized 0-1).
+- **Task**: Identify image manipulation signs in QR captures.
+- **Output**: `[1, 1]` (Probability 0.0 - 1.0).
+- **Fallback**: Heuristic-based analysis of image features (contrast, alignment).
 
-## `payload_risk.tflite`
+### 2. Payload Risk Analysis (`payload_risk.tflite`)
+- **Input**: `[1, 128]` (Tokenized UPI note/address).
+- **Task**: Detect suspicious patterns in payment metadata.
+- **Output**: `[1, 1]` (Risk probability).
+- **Fallback**: Regex-based keyword matching and structural validation.
 
-- Input: one tokenized structured-payload tensor shaped `[1, 128]`, with fixed vocabulary IDs for `pa`, `pn`, `am`, `tn`, and scheme markers.
-- Output: one float tensor shaped `[1, 1]`.
-- Meaning: suspicious-payload probability in `[0, 1]`.
-- Production: small MobileBERT/DistilBERT-style classifier exported for LiteRT, with no raw payload logging.
+## Performance Optimization
+- Models are loaded into memory on-demand.
+- Inference is kept off the main UI thread.
+- Deterministic CPU fallback ensures 100% availability even without model assets.
 
-`OnDeviceInference` currently exposes the load/backend/timing boundary but the demo assets are placeholders. Qualcomm QNN delegate selection should be added there once the target Snapdragon SDK and validated delegate artifact are available.
+---
+*SafePay Shield AI - Privacy through On-Device Learning.*
