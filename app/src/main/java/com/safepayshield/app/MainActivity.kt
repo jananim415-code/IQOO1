@@ -39,6 +39,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import android.speech.RecognizerIntent
+import android.speech.tts.TextToSpeech
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -46,14 +48,17 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Contacts
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Report
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -89,10 +94,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -114,20 +121,64 @@ private const val DemoUpi = "upi://pay?pa=verified@okaxis&pn=City%20Cafe&am=249&
 
 enum class AppScreen { HOME, SCAN, RESULT, SETTINGS, FAMILY, ABOUT }
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     private val permission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
     private lateinit var model: MainViewModel
+    private var tts: TextToSpeech? = null
+    private var isTtsReady = false
+
+    private val speechLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        if (res.resultCode == RESULT_OK) {
+            val spokenText = res.data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull().orEmpty()
+            if (spokenText.isNotBlank()) {
+                val formatted = if (!spokenText.startsWith("upi://", true)) {
+                    if (spokenText.contains("@")) "upi://pay?pa=$spokenText" else "upi://pay?pa=$spokenText@upi"
+                } else spokenText
+                model.analyze(formatted)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         model = ViewModelProvider(this)[MainViewModel::class.java]
+        tts = TextToSpeech(this, this)
         intent?.data?.toString()?.takeIf { it.startsWith("upi://") }?.let(model::analyze)
         val keyguard = getSystemService(KeyguardManager::class.java)
-        setContent { SafePayApp(model, keyguard?.isDeviceSecure == true, hasSuspiciousAccessibilityService()) }
+        setContent {
+            SafePayApp(
+                model = model,
+                screenLockEnabled = keyguard?.isDeviceSecure == true,
+                suspiciousAccessibility = hasSuspiciousAccessibilityService(),
+                onSpeak = ::speakText,
+                onVoiceInput = ::launchVoiceInput
+            )
+        }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             permission.launch(Manifest.permission.CAMERA)
         }
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            tts?.language = java.util.Locale.US
+            isTtsReady = true
+        }
+    }
+
+    private fun speakText(text: String) {
+        if (isTtsReady) {
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "SafePayTTS")
+        }
+    }
+
+    private fun launchVoiceInput() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak UPI address or payee details")
+        }
+        runCatching { speechLauncher.launch(intent) }
     }
 
     private fun hasSuspiciousAccessibilityService(): Boolean = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
@@ -137,11 +188,23 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         intent.data?.toString()?.takeIf { it.startsWith("upi://") }?.let(model::analyze)
     }
+
+    override fun onDestroy() {
+        tts?.stop()
+        tts?.shutdown()
+        super.onDestroy()
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SafePayApp(model: MainViewModel, screenLockEnabled: Boolean = true, suspiciousAccessibility: Boolean = false) {
+fun SafePayApp(
+    model: MainViewModel,
+    screenLockEnabled: Boolean = true,
+    suspiciousAccessibility: Boolean = false,
+    onSpeak: (String) -> Unit = {},
+    onVoiceInput: () -> Unit = {}
+) {
     val result by model.result.collectAsState()
     val elder by model.elderMode.collectAsState()
     val language by model.language.collectAsState()
@@ -151,6 +214,8 @@ fun SafePayApp(model: MainViewModel, screenLockEnabled: Boolean = true, suspicio
     val clearEvent by model.clearEvent.collectAsState()
     val screen = remember { mutableStateOf(if (result != null) AppScreen.RESULT else AppScreen.HOME) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val clipboardManager = LocalClipboardManager.current
+    val coroutineScope = androidx.compose.runtime.rememberCoroutineScope()
     var pasteOpen by remember { mutableStateOf(false) }
     var pasteValue by remember { mutableStateOf("") }
     var securityOpen by remember { mutableStateOf(!screenLockEnabled || suspiciousAccessibility) }
@@ -178,9 +243,26 @@ fun SafePayApp(model: MainViewModel, screenLockEnabled: Boolean = true, suspicio
                     label = "screen"
                 ) { current ->
                     when (current) {
-                        AppScreen.HOME -> HomeScreen(fontScale, elder, language, history, { model.runScenario(it) }, { model.analyze(it) }, { screen.value = AppScreen.SCAN }, { pasteOpen = true }, { screen.value = AppScreen.SETTINGS })
+                        AppScreen.HOME -> HomeScreen(fontScale, elder, language, history, { model.runScenario(it) }, { model.analyze(it) }, { screen.value = AppScreen.SCAN }, { pasteOpen = true }, onVoiceInput, { screen.value = AppScreen.SETTINGS })
                         AppScreen.SCAN -> ScanScreen(fontScale, { model.analyze(it) }, { screen.value = AppScreen.HOME })
-                        AppScreen.RESULT -> result?.let { ResultScreen(it, fontScale, familyApproval, familyApproved, model.hasTrustedContact(), model, { screen.value = AppScreen.HOME }) }
+                        AppScreen.RESULT -> result?.let {
+                            ResultScreen(
+                                result = it,
+                                scale = fontScale,
+                                familyApproval = familyApproval,
+                                familyApproved = familyApproved,
+                                hasTrustedContact = model.hasTrustedContact(),
+                                model = model,
+                                elder = elder,
+                                onSpeak = onSpeak,
+                                onCopyFeedback = { msg ->
+                                    kotlinx.coroutines.GlobalScope.run {
+                                        coroutineScope.launch { snackbarHostState.showSnackbar(msg) }
+                                    }
+                                },
+                                home = { screen.value = AppScreen.HOME }
+                            )
+                        }
                         AppScreen.SETTINGS -> SettingsScreen(fontScale, model, { screen.value = AppScreen.FAMILY }, { screen.value = AppScreen.ABOUT })
                         AppScreen.FAMILY -> FamilyScreen(fontScale, model)
                         AppScreen.ABOUT -> AboutScreen(fontScale, model)
@@ -196,10 +278,41 @@ fun SafePayApp(model: MainViewModel, screenLockEnabled: Boolean = true, suspicio
         confirmButton = { Button({ securityOpen = false }) { Text("Continue") } }
     )
     if (pasteOpen) {
-        AlertDialog(onDismissRequest = { pasteOpen = false }, title = { Text("Paste UPI link") },
-            text = { OutlinedTextField(pasteValue, { pasteValue = it }, label = { Text("upi://pay...") }, singleLine = true) },
+        AlertDialog(
+            onDismissRequest = { pasteOpen = false },
+            title = { Text("Paste or speak UPI link") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = pasteValue,
+                        onValueChange = { pasteValue = it },
+                        label = { Text("upi://pay...") },
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(onClick = { onVoiceInput() }) {
+                                Icon(Icons.Default.Mic, contentDescription = "Voice Input", tint = Blue)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = {
+                            clipboardManager.getText()?.text?.let { clipText ->
+                                pasteValue = clipText
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Paste from Clipboard")
+                        Spacer(Modifier.width(6.dp))
+                        Text("Paste from Clipboard")
+                    }
+                }
+            },
             confirmButton = { Button(onClick = { pasteOpen = false; model.analyze(pasteValue) }) { Text("Analyze") } },
-            dismissButton = { OutlinedButton(onClick = { pasteOpen = false }) { Text("Cancel") } })
+            dismissButton = { OutlinedButton(onClick = { pasteOpen = false }) { Text("Cancel") } }
+        )
     }
 }
 
@@ -224,7 +337,7 @@ private fun BottomBar(current: AppScreen, scale: Float, navigate: (AppScreen) ->
 }
 
 @Composable
-private fun HomeScreen(scale: Float, elder: Boolean, language: String, history: List<HistoryItem>, runScenario: (Int) -> Unit, replay: (String) -> Unit, scan: () -> Unit, paste: () -> Unit, settings: () -> Unit) {
+private fun HomeScreen(scale: Float, elder: Boolean, language: String, history: List<HistoryItem>, runScenario: (Int) -> Unit, replay: (String) -> Unit, scan: () -> Unit, paste: () -> Unit, onVoiceInput: () -> Unit, settings: () -> Unit) {
     val tamil = language == "Tamil"
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         item { Spacer(Modifier.height(10.dp)); Text(if (tamil) "மாலை வணக்கம்" else "Good evening", fontSize = (14 * scale).sp, color = Color.Gray); Text(if (tamil) "நம்பிக்கையுடன் செலுத்துங்கள்." else "Pay with confidence.", fontSize = (30 * scale).sp, fontWeight = FontWeight.Bold, color = Ink) }
@@ -238,7 +351,20 @@ private fun HomeScreen(scale: Float, elder: Boolean, language: String, history: 
             }
         }
         item { Button(scan, Modifier.fillMaxWidth().height(if (elder) 64.dp else 56.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = Blue)) { Icon(Icons.Default.CameraAlt, null); Spacer(Modifier.width(10.dp)); Text(if (tamil) "QR ஸ்கேன்" else "Scan QR", fontSize = (17 * scale).sp, fontWeight = FontWeight.Bold) } }
-        item { OutlinedButton(paste, Modifier.fillMaxWidth().height(52.dp), shape = RoundedCornerShape(16.dp)) { Text(if (tamil) "UPI இணைப்பை ஒட்டவும்" else "Paste UPI link", fontSize = (15 * scale).sp) } }
+        item {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(paste, Modifier.weight(1f).height(52.dp), shape = RoundedCornerShape(16.dp)) {
+                    Icon(Icons.Default.ContentCopy, null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (tamil) "இணைப்பை ஒட்டவும்" else "Paste UPI link", fontSize = (14 * scale).sp)
+                }
+                OutlinedButton(onVoiceInput, Modifier.height(52.dp), shape = RoundedCornerShape(16.dp)) {
+                    Icon(Icons.Default.Mic, contentDescription = "Voice Input", tint = Blue)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Voice", fontSize = (14 * scale).sp)
+                }
+            }
+        }
         item { QuickCard("Elder Mode", if (elder) "Large text and spoken warnings are on" else "Make every control easier to read", Icons.Default.Security, settings) }
         item { Text("Demo scenarios", fontSize = (18 * scale).sp, fontWeight = FontWeight.Bold, color = Ink) }
         item { DemoRow("SAFE demo - Normal merchant", "Known verified payee", "SAFE", Mint) { runScenario(0) } }
@@ -296,18 +422,70 @@ private fun ScanScreen(scale: Float, analyze: (String) -> Unit, cancel: () -> Un
 }
 
 @Composable
-private fun ResultScreen(result: RiskResult, scale: Float, familyApproval: Boolean, familyApproved: Boolean, hasTrustedContact: Boolean, model: MainViewModel, home: () -> Unit) {
+private fun ResultScreen(
+    result: RiskResult,
+    scale: Float,
+    familyApproval: Boolean,
+    familyApproved: Boolean,
+    hasTrustedContact: Boolean,
+    model: MainViewModel,
+    elder: Boolean,
+    onSpeak: (String) -> Unit,
+    onCopyFeedback: (String) -> Unit,
+    home: () -> Unit
+) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
+    val clipboardManager = LocalClipboardManager.current
     var verifyOpen by remember { mutableStateOf(false) }
     var verifySent by remember { mutableStateOf(false) }
     var reportOpen by remember { mutableStateOf(false) }
     var contactPrompt by remember { mutableStateOf(false) }
-    LaunchedEffect(result.verdict) { if (result.verdict != Verdict.SAFE) haptics.performHapticFeedback(HapticFeedbackType.LongPress) }
+
+    val rawUpi = "upi://pay?pa=${result.pa}&pn=${Uri.encode(result.payee)}&am=${result.amount}&tn=${Uri.encode(result.note)}"
+    val spokenWarning = "Safety check result: ${result.verdict.name}. Score ${result.score} out of 100. Payee is ${result.payee}. ${result.reasons.firstOrNull().orEmpty()}"
+
+    LaunchedEffect(result.verdict) {
+        if (result.verdict != Verdict.SAFE) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        if (elder || result.verdict != Verdict.SAFE) onSpeak(spokenWarning)
+    }
     val (color, icon, title) = when (result.verdict) { Verdict.SAFE -> Triple(Mint, Icons.Default.CheckCircle, "Safe to proceed"); Verdict.CAUTION -> Triple(Amber, Icons.Default.Warning, "Pause and verify"); Verdict.BLOCK -> Triple(Red, Icons.Default.Report, "Payment blocked") }
     LazyColumn(Modifier.fillMaxSize().padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         item { Spacer(Modifier.height(4.dp)); Card(colors = CardDefaults.cardColors(color), shape = RoundedCornerShape(22.dp)) { Column(Modifier.fillMaxWidth().padding(22.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Icon(icon, null, tint = Color.White, modifier = Modifier.size(30.dp)); Spacer(Modifier.width(10.dp)); Text(result.verdict.name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp) }; Text(title, color = Color.White, fontSize = (27 * scale).sp, fontWeight = FontWeight.Bold); Text("Composite risk score ${result.score}/100", color = Color.White.copy(.85f), fontSize = 13.sp) } } }
-        item { Card(colors = CardDefaults.cardColors(Color.White), shape = RoundedCornerShape(18.dp)) { Column(Modifier.padding(18.dp)) { Text(result.payee, fontSize = (20 * scale).sp, fontWeight = FontWeight.Bold, color = Ink); Text(result.pa, color = Color.Gray, fontSize = 13.sp); Spacer(Modifier.height(14.dp)); Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("Amount", color = Color.Gray); Text("₹${result.amount}", fontWeight = FontWeight.Bold, color = Ink) } } } }
+        item {
+            Card(colors = CardDefaults.cardColors(Color.White), shape = RoundedCornerShape(18.dp)) {
+                Column(Modifier.padding(18.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(result.payee, fontSize = (20 * scale).sp, fontWeight = FontWeight.Bold, color = Ink)
+                            Text(result.pa, color = Color.Gray, fontSize = 13.sp)
+                        }
+                        IconButton(onClick = {
+                            clipboardManager.setText(AnnotatedString(rawUpi))
+                            onCopyFeedback("UPI link copied to clipboard!")
+                        }) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy UPI Link", tint = Blue)
+                        }
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Amount", color = Color.Gray)
+                        Text("₹${result.amount}", fontWeight = FontWeight.Bold, color = Ink)
+                    }
+                }
+            }
+        }
+        item {
+            OutlinedButton(
+                onClick = { onSpeak(spokenWarning) },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(Icons.Default.VolumeUp, contentDescription = "Listen Spoken Warning", tint = Blue)
+                Spacer(Modifier.width(8.dp))
+                Text("Listen spoken warning", fontSize = (14 * scale).sp, color = Blue)
+            }
+        }
         item { Text("Why we said this", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Ink) }
         if (result.verdict == Verdict.CAUTION && familyApproval && !familyApproved) item { Text(if (hasTrustedContact) "High-risk payment requires family approval." else "Add a trusted contact before requesting family approval.", color = Amber, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
         if (result.verdict == Verdict.CAUTION && familyApproved) item { Text("Family approval recorded. You can proceed.", color = Mint, fontWeight = FontWeight.Bold, fontSize = 14.sp) }
