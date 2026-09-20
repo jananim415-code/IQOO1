@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.os.Build
 import android.app.KeyguardManager
 import android.provider.Settings
+import android.widget.Toast
 import android.view.WindowManager
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -397,6 +398,7 @@ private fun ScanScreen(scale: Float, analyze: (String) -> Unit, cancel: () -> Un
             modifier = Modifier.fillMaxWidth().height(330.dp).clip(RoundedCornerShape(24.dp)),
             factory = { viewContext ->
                 val previewView = PreviewView(viewContext)
+                var lastNonUpiToast = 0L
                 val providerFuture = ProcessCameraProvider.getInstance(viewContext)
                 providerFuture.addListener({
                     val provider = providerFuture.get()
@@ -407,7 +409,20 @@ private fun ScanScreen(scale: Float, analyze: (String) -> Unit, cancel: () -> Un
                         val mediaImage = proxy.image
                         if (mediaImage == null) { proxy.close(); return@setAnalyzer }
                         scanner.process(InputImage.fromMediaImage(mediaImage, proxy.imageInfo.rotationDegrees))
-                            .addOnSuccessListener { codes -> codes.firstOrNull()?.rawValue?.takeIf { it.startsWith("upi://") }?.let(analyze) }
+                            .addOnSuccessListener { codes ->
+                                val raw = codes.firstOrNull()?.rawValue
+                                if (raw != null) {
+                                    if (raw.startsWith("upi://")) {
+                                        analyze(raw)
+                                    } else {
+                                        val now = System.currentTimeMillis()
+                                        if (now - lastNonUpiToast > 3000) {
+                                            lastNonUpiToast = now
+                                            Toast.makeText(viewContext, "QR detected but it's not a UPI payment code", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                }
+                            }
                             .addOnCompleteListener { proxy.close() }
                     }
                     provider.unbindAll()
